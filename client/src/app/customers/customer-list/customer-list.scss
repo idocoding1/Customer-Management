@@ -46,6 +46,19 @@
   }
 }
 
+.status-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 16px;
+}
+
+.status-filter-label {
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-on-surface-variant);
+}
+
 .results {
   position: relative;
   border: 1px solid var(--mat-sys-outline-variant);

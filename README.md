@@ -2,7 +2,7 @@
 
 A small customer management app. It's an Angular 22 client with Angular Material, backed by an Express API that stores customers in a JSON file.
 
-You can list, search, sort, add and edit customers. The layout works on desktop and on phones.
+You can list, search, filter by status, sort, add and edit customers. The layout works on desktop and on phones.
 
 ## Getting started
 
@@ -35,7 +35,7 @@ Then open http://localhost:4200.
 
 | Method | Path | Notes |
 |---|---|---|
-| `GET` | `/api/customers?q=&sort=&dir=` | `q` searches name and email, ignoring case. `sort` is one of `name`, `email`, `status`, `createdAt` (the default). `dir` is `asc` or `desc` (the default). |
+| `GET` | `/api/customers?q=&status=&sort=&dir=` | `q` searches name and email, ignoring case. `status` is a comma-separated list such as `active,lead` (leave it out for all statuses; unknown values are ignored). `sort` is one of `name`, `email`, `status`, `createdAt` (the default). `dir` is `asc` or `desc` (the default). |
 | `POST` | `/api/customers` | Body: `{ name, email, status }`. The server sets `id` and `createdAt`. Returns `201`. |
 | `PUT` | `/api/customers/:id` | Body: `{ name, email, status }`. |
 
@@ -68,14 +68,13 @@ customer-management/
 - `CustomerStore` owns the state and the request logic.
 - The components only render and forward user actions.
 
-I didn't add NgRx, a shared or core library, or generic base classes. For one screen they'd add ceremony without making the code clearer.
-
 **Signals for state, RxJS for the request pipeline.** The store exposes read-only signals (`customers`, `loading`, `loaded`, `error`, `activeSearch`, `sort`) that templates read directly. RxJS is used only where it's clearly the better tool: debouncing, combining inputs and cancelling requests. The app runs zoneless, the Angular 22 default.
 
 **Search: responsive without overloading the API.** This was the product requirement. The pipeline in `customer-store.ts` works like this:
 
 ```
 search input → trim → debounceTime(300ms) → distinctUntilChanged ┐
+status filter (immediate) ───────────────────────────────────────┤
 sort changes (immediate) ────────────────────────────────────────┼→ combineLatest → switchMap(GET /api/customers)
 refresh / after save (immediate) ────────────────────────────────┘
 ```
@@ -83,7 +82,7 @@ refresh / after save (immediate) ───────────────�
 - **Debounce (300 ms):** typing "cohen" sends one request, not five. 300 ms is short enough to feel instant and long enough to cover normal typing speed.
 - **`distinctUntilChanged` after trimming:** adding spaces, or typing and deleting back to the same text, doesn't send a request.
 - **`switchMap`:** when a new query starts, the unfinished HTTP request is cancelled. A slow, older response can't overwrite newer results.
-- **Sort, retry and refresh after save skip the debounce,** because they're single deliberate actions.
+- **Status filter, sort, retry and refresh after save skip the debounce,** because they're single deliberate actions.
 - **The current results stay on screen while a request is running,** with a thin progress bar on top, so the list doesn't flash empty while you type.
 - **Search runs on the server,** so the client never needs the full dataset. That keeps working as the data grows, and pagination can be added on the same endpoint.
 
@@ -94,10 +93,12 @@ You can see this in the browser's Network tab, or in the server log, which print
 **Empty and error states are handled separately:**
 - Loading
 - No customers at all (with an "Add your first customer" button)
-- No matches for the search (shows the search term, with a "Clear search" button)
+- No matches for the search or status filter (the message names both, e.g. *No Inactive or Lead customers match "noah"*, with a "Clear search and filters" button)
 - Load error (a specific message when the server can't be reached, plus Retry)
 
 Save errors stay inside the dialog, so the user doesn't lose what they typed. A duplicate email (`409`) is shown as an error on the email field.
+
+**Status is a filter, not a sort.** Sorting by status alphabetically isn't useful, because what users want is to see only certain statuses. A row of Active / Inactive / Lead chips lets you pick one or more, and the filter runs on the server along with the search. No chips selected means all statuses, and a "Show all" button clears the selection. The status column header isn't sortable, for the same reason.
 
 **Sorting is easy to find.** A "Sort by" dropdown next to the search box offers plain-language options ("Newest first", "Name (A–Z)", and so on). It's always visible, so users don't need to know that column headers can be clicked. Clicking a header still sorts too, and both read and write the same store state, so they always match. On phones, where the cards have no headers, the dropdown is the only sort control.
 
@@ -109,14 +110,14 @@ Save errors stay inside the dialog, so the user doesn't lose what they typed. A 
 
 ## Tests
 
-`npm test` runs 11 unit tests (Vitest, the Angular 22 default):
+`npm test` runs 12 unit tests (Vitest, the Angular 22 default):
 
 - **`customer-store.spec.ts`** (covers the search requirement):
   - Loads data immediately on start.
   - Fast typing produces exactly one request.
   - Whitespace-only changes don't send a request.
   - An older request is cancelled when a newer query starts, and its response is ignored.
-  - Sorting skips the debounce.
+  - Sorting and the status filter skip the debounce, and the status filter is combined with the current search.
   - The error state appears, and Retry recovers from it.
 - **`customer-form-dialog.spec.ts`:**
   - Required and email validation.
@@ -126,7 +127,7 @@ Save errors stay inside the dialog, so the user doesn't lose what they typed. A 
 
 What I'd test next:
 1. **List component tests:** each empty/error state renders the right message and button, and the table switches to cards at the breakpoint.
-2. **API tests** for the server with supertest: validation, duplicate email, search and sort, and persistence to the file.
+2. **API tests** for the server with supertest: validation, duplicate email, search, status filter and sort, and persistence to the file.
 3. **A few Playwright end-to-end tests** of the main flows (search, add, edit, sort) on desktop and mobile viewports, including an accessibility check with axe.
 
 ## Known limitations and what I'd improve with more time

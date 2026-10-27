@@ -5,6 +5,7 @@ import {
   DuplicateEmailError,
   NotFoundError,
   type CustomerInput,
+  type CustomerStatus,
   type SortDirection,
   type SortField,
 } from './customer-repository.js';
@@ -30,8 +31,15 @@ app.get('/api/customers', (req, res) => {
     ? (req.query.sort as SortField)
     : undefined;
   const dir: SortDirection = req.query.dir === 'asc' ? 'asc' : 'desc';
-  console.log(`GET /api/customers q="${q ?? ''}" sort=${sort ?? 'createdAt'} dir=${dir}`);
-  res.json(repo.list({ q, sort, dir }));
+  // ?status=active,lead — unknown values are ignored; none means all statuses.
+  const statuses =
+    typeof req.query.status === 'string'
+      ? (req.query.status.split(',').filter((s) => CUSTOMER_STATUSES.includes(s as CustomerStatus)) as CustomerStatus[])
+      : [];
+  console.log(
+    `GET /api/customers q="${q ?? ''}" status=${statuses.join(',') || 'all'} sort=${sort ?? 'createdAt'} dir=${dir}`,
+  );
+  res.json(repo.list({ q, statuses, sort, dir }));
 });
 
 app.post('/api/customers', async (req, res, next) => {

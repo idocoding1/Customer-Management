@@ -12,11 +12,18 @@ export interface Customer {
 
 export type CustomerInput = Pick<Customer, 'name' | 'email' | 'status'>;
 
-export type SortField = 'name' | 'email' | 'status' | 'createdAt';
+export type SortField = 'name' | 'email' | 'createdAt';
 
 export interface CustomerSort {
   field: SortField;
   direction: 'asc' | 'desc';
+}
+
+export interface CustomerQuery {
+  search: string;
+  /** Empty means all statuses. */
+  statuses: CustomerStatus[];
+  sort: CustomerSort;
 }
 
 export const STATUS_LABELS: Record<CustomerStatus, string> = {

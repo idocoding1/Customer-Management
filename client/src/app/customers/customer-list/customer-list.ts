@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -19,13 +20,20 @@ import {
   CustomerFormDialogData,
 } from '../customer-form-dialog/customer-form-dialog';
 import { CustomerStore } from '../customer-store';
-import { Customer, CustomerSort, STATUS_LABELS, SortField } from '../customer.model';
+import {
+  CUSTOMER_STATUSES,
+  Customer,
+  CustomerSort,
+  STATUS_LABELS,
+  SortField,
+} from '../customer.model';
 
 @Component({
   selector: 'app-customer-list',
   imports: [
     DatePipe,
     MatButtonModule,
+    MatChipsModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -61,14 +69,23 @@ export class CustomerList {
     sortOption('Name (Z–A)', 'name', 'desc'),
     sortOption('Email (A–Z)', 'email', 'asc'),
     sortOption('Email (Z–A)', 'email', 'desc'),
-    sortOption('Status (A–Z)', 'status', 'asc'),
-    sortOption('Status (Z–A)', 'status', 'desc'),
   ];
 
   /** Kept in sync with the table headers, which update the same store sort. */
   protected readonly sortKey = computed(() => sortKeyOf(this.store.sort()));
 
+  protected readonly statuses = CUSTOMER_STATUSES;
   protected readonly searchText = signal('');
+
+  /** Describes why the list is empty when a search or status filter is applied; null otherwise. */
+  protected readonly noResultsMessage = computed(() => {
+    const search = this.store.activeSearch();
+    const statuses = this.store.activeStatuses().map((s) => STATUS_LABELS[s]).join(' or ');
+    if (search && statuses) return `No ${statuses} customers match "${search}".`;
+    if (search) return `No customers match "${search}".`;
+    if (statuses) return `No ${statuses} customers.`;
+    return null;
+  });
 
   /** mat-table row templates are untyped; this restores the Customer type in the template. */
   protected asCustomer(row: unknown): Customer {
@@ -82,6 +99,11 @@ export class CustomerList {
 
   protected clearSearch(): void {
     this.onSearch('');
+  }
+
+  protected clearFilters(): void {
+    this.clearSearch();
+    this.store.setStatusFilter([]);
   }
 
   protected onTableSort(sort: Sort): void {

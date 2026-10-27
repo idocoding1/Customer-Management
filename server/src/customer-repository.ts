@@ -43,13 +43,19 @@ export class CustomerRepository {
     this.customers = JSON.parse(await readFile(dataFile, 'utf8')) as Customer[];
   }
 
-  list(query: { q?: string; sort?: SortField; dir?: SortDirection }): Customer[] {
+  list(query: {
+    q?: string;
+    statuses?: CustomerStatus[];
+    sort?: SortField;
+    dir?: SortDirection;
+  }): Customer[] {
     const term = query.q?.trim().toLowerCase();
-    const filtered = term
-      ? this.customers.filter(
-          (c) => c.name.toLowerCase().includes(term) || c.email.toLowerCase().includes(term),
-        )
-      : [...this.customers];
+    const statuses = query.statuses?.length ? query.statuses : null;
+    const filtered = this.customers.filter(
+      (c) =>
+        (!statuses || statuses.includes(c.status)) &&
+        (!term || c.name.toLowerCase().includes(term) || c.email.toLowerCase().includes(term)),
+    );
 
     const field = query.sort ?? 'createdAt';
     const factor = query.dir === 'asc' ? 1 : -1;

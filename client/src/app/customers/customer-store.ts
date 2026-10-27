@@ -16,7 +16,7 @@ import {
   tap,
 } from 'rxjs';
 import { CustomerApiService } from './customer-api.service';
-import { Customer, CustomerInput, CustomerSort } from './customer.model';
+import { Customer, CustomerInput, CustomerSort, CustomerStatus } from './customer.model';
 
 export const SEARCH_DEBOUNCE_MS = 300;
 
@@ -26,8 +26,9 @@ interface CustomerState {
   /** True once the first request has completed (successfully or not). */
   loaded: boolean;
   error: string | null;
-  /** The search term the current `customers` were fetched with. */
+  /** The search term and status filter the current `customers` were fetched with. */
   search: string;
+  statuses: CustomerStatus[];
 }
 
 /**
@@ -43,6 +44,7 @@ export class CustomerStore {
   private readonly api = inject(CustomerApiService);
 
   private readonly searchInput$ = new Subject<string>();
+  private readonly statuses$ = new BehaviorSubject<CustomerStatus[]>([]);
   private readonly sort$ = new BehaviorSubject<CustomerSort>({ field: 'createdAt', direction: 'desc' });
   private readonly refresh$ = new BehaviorSubject<void>(undefined);
 
@@ -52,6 +54,7 @@ export class CustomerStore {
     loaded: false,
     error: null,
     search: '',
+    statuses: [],
   });
 
   readonly customers = computed(() => this.state().customers);
@@ -59,6 +62,8 @@ export class CustomerStore {
   readonly loaded = computed(() => this.state().loaded);
   readonly error = computed(() => this.state().error);
   readonly activeSearch = computed(() => this.state().search);
+  readonly activeStatuses = computed(() => this.state().statuses);
+  readonly statusFilter = signal<CustomerStatus[]>(this.statuses$.value);
   readonly sort = signal<CustomerSort>(this.sort$.value);
 
   constructor() {
@@ -70,24 +75,30 @@ export class CustomerStore {
       distinctUntilChanged(),
     );
 
-    combineLatest([search$, this.sort$, this.refresh$])
+    combineLatest([search$, this.statuses$, this.sort$, this.refresh$])
       .pipe(
         tap(() => this.state.update((s) => ({ ...s, loading: true, error: null }))),
-        switchMap(([search, sort]) =>
-          this.api.list(search, sort).pipe(
-            map((customers) => ({ customers, search, error: null })),
-            catchError((err: unknown) => of({ customers: [], search, error: describeError(err) })),
+        switchMap(([search, statuses, sort]) =>
+          this.api.list({ search, statuses, sort }).pipe(
+            map((customers) => ({ customers, search, statuses, error: null })),
+            catchError((err: unknown) =>
+              of({ customers: [], search, statuses, error: describeError(err) }),
+            ),
           ),
         ),
         takeUntilDestroyed(),
       )
-      .subscribe(({ customers, search, error }) =>
-        this.state.set({ customers, search, error, loading: false, loaded: true }),
-      );
+      .subscribe((result) => this.state.set({ ...result, loading: false, loaded: true }));
   }
 
   setSearch(term: string): void {
     this.searchInput$.next(term);
+  }
+
+  /** Status chips are discrete clicks, so like sorting this applies immediately. */
+  setStatusFilter(statuses: CustomerStatus[]): void {
+    this.statusFilter.set(statuses);
+    this.statuses$.next(statuses);
   }
 
   setSort(sort: CustomerSort): void {

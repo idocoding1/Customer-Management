@@ -35,6 +35,23 @@
   </mat-form-field>
 </section>
 
+<section class="status-filter">
+  <span class="status-filter-label" id="status-filter-label">Status</span>
+  <mat-chip-listbox
+    multiple
+    aria-labelledby="status-filter-label"
+    [value]="store.statusFilter()"
+    (change)="store.setStatusFilter($event.value)"
+  >
+    @for (status of statuses; track status) {
+      <mat-chip-option [value]="status">{{ statusLabels[status] }}</mat-chip-option>
+    }
+  </mat-chip-listbox>
+  @if (store.statusFilter().length) {
+    <button mat-button (click)="store.setStatusFilter([])">Show all</button>
+  }
+</section>
+
 <div class="results" [attr.aria-busy]="store.loading()">
   <mat-progress-bar
     mode="indeterminate"
@@ -54,10 +71,10 @@
     </div>
   } @else if (store.loaded() && store.customers().length === 0) {
     <div class="state">
-      @if (store.activeSearch()) {
+      @if (noResultsMessage(); as message) {
         <mat-icon class="state-icon">search_off</mat-icon>
-        <p>No customers match "{{ store.activeSearch() }}".</p>
-        <button mat-stroked-button (click)="clearSearch()">Clear search</button>
+        <p>{{ message }}</p>
+        <button mat-stroked-button (click)="clearFilters()">Clear search and filters</button>
       } @else {
         <mat-icon class="state-icon">group</mat-icon>
         <p>No customers yet.</p>
@@ -104,7 +121,7 @@
         </ng-container>
 
         <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+          <th mat-header-cell *matHeaderCellDef>Status</th>
           <td mat-cell *matCellDef="let customer">
             <span class="status status-{{ customer.status }}">{{ statusLabels[asCustomer(customer).status] }}</span>
           </td>

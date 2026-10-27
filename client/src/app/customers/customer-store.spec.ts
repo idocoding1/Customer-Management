@@ -60,7 +60,11 @@ describe('CustomerStore', () => {
 
     vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
     expect(api.list).toHaveBeenCalledTimes(1);
-    expect(api.list).toHaveBeenCalledWith('noa', { field: 'createdAt', direction: 'desc' });
+    expect(api.list).toHaveBeenCalledWith({
+      search: 'noa',
+      statuses: [],
+      sort: { field: 'createdAt', direction: 'desc' },
+    });
   });
 
   it('skips the request when the trimmed term did not change', () => {
@@ -94,7 +98,29 @@ describe('CustomerStore', () => {
 
     store.setSort({ field: 'name', direction: 'asc' });
 
-    expect(api.list).toHaveBeenCalledWith('', { field: 'name', direction: 'asc' });
+    expect(api.list).toHaveBeenCalledWith({
+      search: '',
+      statuses: [],
+      sort: { field: 'name', direction: 'asc' },
+    });
+  });
+
+  it('applies the status filter immediately and combines it with search', () => {
+    const store = setup();
+    store.setSearch('noa');
+    vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+    api.list.mockClear();
+
+    store.setStatusFilter(['active', 'lead']);
+
+    expect(api.list).toHaveBeenCalledTimes(1);
+    expect(api.list).toHaveBeenCalledWith({
+      search: 'noa',
+      statuses: ['active', 'lead'],
+      sort: { field: 'createdAt', direction: 'desc' },
+    });
+    responses.at(-1)!.next([]);
+    expect(store.activeStatuses()).toEqual(['active', 'lead']);
   });
 
   it('exposes an error and recovers on retry', () => {
