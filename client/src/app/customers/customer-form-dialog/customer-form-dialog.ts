@@ -17,6 +17,9 @@ import {
   STATUS_LABELS,
 } from '../customer.model';
 
+// Same rule as the server: letters in any language, joined by spaces, hyphens or apostrophes.
+const NAME_PATTERN = /^\s*\p{L}+(?:(?:\s+|['’-])\p{L}+)*\s*$/u;
+
 export interface CustomerFormDialogData {
   customer: Customer | null;
 }
@@ -46,7 +49,10 @@ export class CustomerFormDialog {
   protected readonly saveError = signal<string | null>(null);
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
-    name: [this.customer?.name ?? '', [Validators.required, Validators.maxLength(100)]],
+    name: [
+      this.customer?.name ?? '',
+      [Validators.required, Validators.maxLength(100), Validators.pattern(NAME_PATTERN)],
+    ],
     email: [this.customer?.email ?? '', [Validators.required, Validators.email]],
     status: [this.customer?.status ?? ('lead' as CustomerStatus), Validators.required],
   });

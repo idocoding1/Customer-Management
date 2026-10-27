@@ -7,6 +7,8 @@
       <input matInput formControlName="name" autocomplete="off" />
       @if (form.controls.name.hasError('required')) {
         <mat-error>Name is required.</mat-error>
+      } @else if (form.controls.name.hasError('pattern')) {
+        <mat-error>Name can only contain letters, spaces, hyphens and apostrophes.</mat-error>
       } @else if (form.controls.name.hasError('maxlength')) {
         <mat-error>Name must be 100 characters or fewer.</mat-error>
       }

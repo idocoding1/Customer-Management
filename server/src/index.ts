@@ -15,6 +15,8 @@ const DELAY_MS = Number(process.env.DELAY_MS ?? 0);
 
 const SORT_FIELDS: SortField[] = ['name', 'email', 'status', 'createdAt'];
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Letters in any language; words may be joined by spaces, hyphens or apostrophes (O'Brien, Ben-David).
+const NAME_PATTERN = /^\s*\p{L}+(?:(?:\s+|['’-])\p{L}+)*\s*$/u;
 
 const repo = new CustomerRepository();
 const app = express();
@@ -75,6 +77,7 @@ function parseInput(req: Request, res: Response): CustomerInput | null {
   const { name, email, status } = req.body ?? {};
   const errors: string[] = [];
   if (typeof name !== 'string' || !name.trim()) errors.push('name is required');
+  else if (!NAME_PATTERN.test(name)) errors.push('name can only contain letters, spaces, hyphens and apostrophes');
   if (typeof email !== 'string' || !EMAIL_PATTERN.test(email.trim())) errors.push('a valid email is required');
   if (!CUSTOMER_STATUSES.includes(status)) errors.push(`status must be one of ${CUSTOMER_STATUSES.join(', ')}`);
 

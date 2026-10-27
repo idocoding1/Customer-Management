@@ -37,7 +37,7 @@ The Angular dev server forwards `/api` calls to `http://localhost:3000` (see `cl
 | `POST` | `/api/customers` | Body is `{ name, email, status }`. The server sets `id` and `createdAt`. Returns `201`. |
 | `PUT` | `/api/customers/:id` | Body is `{ name, email, status }`. |
 
-Bad input returns `400`, an email that's already used returns `409`, and an unknown id returns `404`. All errors come back as `{ message }`.
+Names can only contain letters (any language), spaces, hyphens and apostrophes, so "O'Brien" and "Ben-David" work but numbers and other symbols don't. Bad input returns `400`, an email that's already used returns `409`, and an unknown id returns `404`. All errors come back as `{ message }`.
 
 ## Project structure
 
@@ -102,11 +102,11 @@ When a save fails, the error shows inside the dialog, so nothing the user typed 
 
 **Small screens.** Under 600px (checked with CDK `BreakpointObserver`) the table turns into a list of cards, the search, sort and filter controls stack, and the dialog takes the full width minus a 16px margin.
 
-**Backend.** Express with a small repository class. The data is kept in memory for reads and written to `customers.json` after every change. Writes are queued and go to a temp file first, which is then renamed. That way two quick saves can't mix together, and a crash can't leave a half-written file. The server also validates the input itself instead of trusting the client.
+**Backend.** Express with a small repository class. The data is kept in memory for reads and written to `customers.json` after every change. Writes are queued and go to a temp file first, which is then renamed. That way two quick saves can't mix together, and a crash can't leave a half-written file. The server also validates the input itself instead of trusting the client. The name rule is checked in both places: the form shows the error right away, and the server makes sure it can't be bypassed.
 
 ## Tests
 
-`npm test` runs 16 unit tests (Vitest, the default test runner in Angular 22).
+`npm test` runs 23 unit tests (Vitest, the default test runner in Angular 22).
 
 - **`customer-store.spec.ts`** covers the search requirement:
   - The data loads right away on start.
@@ -118,6 +118,7 @@ When a save fails, the error shows inside the dialog, so nothing the user typed 
 - **`api-timeout.interceptor.spec.ts`:** a request with no answer fails after 10 seconds and gets cancelled, and a response that arrives in time goes through normally.
 - **`customer-form-dialog.spec.ts`:**
   - Required fields and email format are validated.
+  - Names with numbers or symbols are rejected, while names like "Liam O'Brien", "Shira Ben-David" and Hebrew names are accepted.
   - Values are trimmed when creating.
   - Edit mode fills in the form and calls update.
   - A `409` from the server shows on the email field and the dialog stays open.

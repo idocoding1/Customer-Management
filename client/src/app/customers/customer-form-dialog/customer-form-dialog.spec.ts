@@ -58,6 +58,28 @@ describe('CustomerFormDialog', () => {
     expect(element.textContent).toContain('Email is required.');
   });
 
+  it.each(['Dana2', 'Dana!', 'Dana_Levi', '-Dana'])('rejects the name "%s"', async (name) => {
+    const { element, type, submit } = await render({ customer: null });
+    type('name', name);
+    type('email', 'dana@example.com');
+
+    await submit();
+
+    expect(store.create).not.toHaveBeenCalled();
+    expect(element.textContent).toContain('Name can only contain letters, spaces, hyphens and apostrophes.');
+  });
+
+  it.each(["Liam O'Brien", 'Shira Ben-David', 'נועה לוי'])('accepts the name "%s"', async (name) => {
+    store.create.mockReturnValue(of(existing));
+    const { type, submit } = await render({ customer: null });
+    type('name', name);
+    type('email', 'dana@example.com');
+
+    await submit();
+
+    expect(store.create).toHaveBeenCalledWith(expect.objectContaining({ name }));
+  });
+
   it('rejects an invalid email', async () => {
     const { element, type, submit } = await render({ customer: null });
     type('name', 'Dana');
