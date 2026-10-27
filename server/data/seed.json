@@ -1,0 +1,177 @@
+[
+  {
+    "id": "c-001",
+    "name": "Noa Levi",
+    "email": "noa.levi@example.com",
+    "status": "active",
+    "createdAt": "2025-01-06T09:30:00.000Z"
+  },
+  {
+    "id": "c-002",
+    "name": "Daniel Cohen",
+    "email": "daniel.cohen@example.com",
+    "status": "inactive",
+    "createdAt": "2025-01-22T16:30:00.000Z"
+  },
+  {
+    "id": "c-003",
+    "name": "Maya Friedman",
+    "email": "maya.friedman@example.com",
+    "status": "active",
+    "createdAt": "2025-02-07T23:30:00.000Z"
+  },
+  {
+    "id": "c-004",
+    "name": "Yossi Mizrahi",
+    "email": "yossi.mizrahi@example.com",
+    "status": "active",
+    "createdAt": "2025-02-24T06:30:00.000Z"
+  },
+  {
+    "id": "c-005",
+    "name": "Tamar Shapiro",
+    "email": "tamar.shapiro@example.com",
+    "status": "lead",
+    "createdAt": "2025-03-12T13:30:00.000Z"
+  },
+  {
+    "id": "c-006",
+    "name": "Omer Katz",
+    "email": "omer.katz@example.com",
+    "status": "active",
+    "createdAt": "2025-03-28T20:30:00.000Z"
+  },
+  {
+    "id": "c-007",
+    "name": "Shira Ben-David",
+    "email": "shira.bendavid@example.com",
+    "status": "inactive",
+    "createdAt": "2025-04-14T03:30:00.000Z"
+  },
+  {
+    "id": "c-008",
+    "name": "Eitan Peretz",
+    "email": "eitan.peretz@example.com",
+    "status": "active",
+    "createdAt": "2025-04-30T10:30:00.000Z"
+  },
+  {
+    "id": "c-009",
+    "name": "Liat Goldberg",
+    "email": "liat.goldberg@example.com",
+    "status": "active",
+    "createdAt": "2025-05-16T17:30:00.000Z"
+  },
+  {
+    "id": "c-010",
+    "name": "Amit Rosen",
+    "email": "amit.rosen@example.com",
+    "status": "lead",
+    "createdAt": "2025-06-02T00:30:00.000Z"
+  },
+  {
+    "id": "c-011",
+    "name": "Rachel Green",
+    "email": "rachel.green@example.com",
+    "status": "active",
+    "createdAt": "2025-06-18T07:30:00.000Z"
+  },
+  {
+    "id": "c-012",
+    "name": "James Carter",
+    "email": "james.carter@example.com",
+    "status": "inactive",
+    "createdAt": "2025-07-04T14:30:00.000Z"
+  },
+  {
+    "id": "c-013",
+    "name": "Sofia Martinez",
+    "email": "sofia.martinez@example.com",
+    "status": "active",
+    "createdAt": "2025-07-20T21:30:00.000Z"
+  },
+  {
+    "id": "c-014",
+    "name": "Liam O'Brien",
+    "email": "liam.obrien@example.com",
+    "status": "active",
+    "createdAt": "2025-08-06T04:30:00.000Z"
+  },
+  {
+    "id": "c-015",
+    "name": "Emma Schneider",
+    "email": "emma.schneider@example.com",
+    "status": "lead",
+    "createdAt": "2025-08-22T11:30:00.000Z"
+  },
+  {
+    "id": "c-016",
+    "name": "Lucas Rossi",
+    "email": "lucas.rossi@example.com",
+    "status": "active",
+    "createdAt": "2025-09-07T18:30:00.000Z"
+  },
+  {
+    "id": "c-017",
+    "name": "Hana Sato",
+    "email": "hana.sato@example.com",
+    "status": "inactive",
+    "createdAt": "2025-09-24T01:30:00.000Z"
+  },
+  {
+    "id": "c-018",
+    "name": "Arjun Patel",
+    "email": "arjun.patel@example.com",
+    "status": "active",
+    "createdAt": "2025-10-10T08:30:00.000Z"
+  },
+  {
+    "id": "c-019",
+    "name": "Chloe Dubois",
+    "email": "chloe.dubois@example.com",
+    "status": "active",
+    "createdAt": "2025-10-26T15:30:00.000Z"
+  },
+  {
+    "id": "c-020",
+    "name": "Mateo Silva",
+    "email": "mateo.silva@example.com",
+    "status": "lead",
+    "createdAt": "2025-11-11T22:30:00.000Z"
+  },
+  {
+    "id": "c-021",
+    "name": "Olivia Brown",
+    "email": "olivia.brown@example.com",
+    "status": "active",
+    "createdAt": "2025-11-28T05:30:00.000Z"
+  },
+  {
+    "id": "c-022",
+    "name": "Ethan Walker",
+    "email": "ethan.walker@example.com",
+    "status": "inactive",
+    "createdAt": "2025-12-14T12:30:00.000Z"
+  },
+  {
+    "id": "c-023",
+    "name": "Isabella Nguyen",
+    "email": "isabella.nguyen@example.com",
+    "status": "active",
+    "createdAt": "2025-12-30T19:30:00.000Z"
+  },
+  {
+    "id": "c-024",
+    "name": "Noah Kim",
+    "email": "noah.kim@example.com",
+    "status": "active",
+    "createdAt": "2026-01-16T02:30:00.000Z"
+  },
+  {
+    "id": "c-025",
+    "name": "Ava Johnson",
+    "email": "ava.johnson@example.com",
+    "status": "lead",
+    "createdAt": "2026-02-01T09:30:00.000Z"
+  }
+]
