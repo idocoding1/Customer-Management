@@ -99,9 +99,10 @@ You can see this in the browser's Network tab, or in the server log, which print
 
 Save errors stay inside the dialog, so the user doesn't lose what they typed. A duplicate email (`409`) is shown as an error on the email field.
 
+**Sorting is easy to find.** A "Sort by" dropdown next to the search box offers plain-language options ("Newest first", "Name (A–Z)", and so on). It's always visible, so users don't need to know that column headers can be clicked. Clicking a header still sorts too, and both read and write the same store state, so they always match. On phones, where the cards have no headers, the dropdown is the only sort control.
+
 **Responsive layout.** Below 600px (checked with CDK `BreakpointObserver`):
 - The table is replaced by a card list.
-- Because cards have no column headers to click, a "Sort by" dropdown and a direction toggle appear.
 - The dialog spans the screen width minus a 16px margin.
 
 **Backend.** Express with a small repository class. Data is kept in memory for reads and written to `customers.json` on every change. Writes go through a queue and use write-to-temp-then-rename, so two quick saves can't corrupt the file. The server validates input itself rather than trusting the client.

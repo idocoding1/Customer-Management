@@ -24,26 +24,15 @@
     }
   </mat-form-field>
 
-  @if (isSmallScreen()) {
-    <div class="mobile-sort">
-      <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>Sort by</mat-label>
-        <mat-select [value]="store.sort().field" (valueChange)="onSortFieldChange($event)">
-          @for (option of sortOptions; track option.field) {
-            <mat-option [value]="option.field">{{ option.label }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-      <button
-        mat-icon-button
-        [attr.aria-label]="store.sort().direction === 'asc' ? 'Sorted ascending' : 'Sorted descending'"
-        [matTooltip]="store.sort().direction === 'asc' ? 'Ascending' : 'Descending'"
-        (click)="toggleSortDirection()"
-      >
-        <mat-icon>{{ store.sort().direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
-      </button>
-    </div>
-  }
+  <mat-form-field appearance="outline" class="sort-field" subscriptSizing="dynamic">
+    <mat-label>Sort by</mat-label>
+    <mat-icon matPrefix>sort</mat-icon>
+    <mat-select [value]="sortKey()" (valueChange)="onSortOptionChange($event)">
+      @for (option of sortOptions; track option.key) {
+        <mat-option [value]="option.key">{{ option.label }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
 </section>
 
 <div class="results" [attr.aria-busy]="store.loading()">

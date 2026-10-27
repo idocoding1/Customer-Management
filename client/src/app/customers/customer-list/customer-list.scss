@@ -38,14 +38,11 @@
   }
 }
 
-.mobile-sort {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  width: 100%;
+.sort-field {
+  flex: 0 0 220px;
 
-  mat-form-field {
-    flex: 1;
+  @media (max-width: 599.98px) {
+    flex: 1 1 100%;
   }
 }
 

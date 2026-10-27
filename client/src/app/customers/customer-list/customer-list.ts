@@ -1,6 +1,6 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { DatePipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -19,7 +19,7 @@ import {
   CustomerFormDialogData,
 } from '../customer-form-dialog/customer-form-dialog';
 import { CustomerStore } from '../customer-store';
-import { Customer, STATUS_LABELS, SortField } from '../customer.model';
+import { Customer, CustomerSort, STATUS_LABELS, SortField } from '../customer.model';
 
 @Component({
   selector: 'app-customer-list',
@@ -53,12 +53,20 @@ export class CustomerList {
 
   protected readonly columns = ['name', 'email', 'status', 'createdAt', 'actions'];
   protected readonly statusLabels = STATUS_LABELS;
-  protected readonly sortOptions: { field: SortField; label: string }[] = [
-    { field: 'createdAt', label: 'Created' },
-    { field: 'name', label: 'Name' },
-    { field: 'email', label: 'Email' },
-    { field: 'status', label: 'Status' },
+  /** Field + direction pairs in plain language, so sorting is discoverable without clicking headers. */
+  protected readonly sortOptions = [
+    sortOption('Newest first', 'createdAt', 'desc'),
+    sortOption('Oldest first', 'createdAt', 'asc'),
+    sortOption('Name (A–Z)', 'name', 'asc'),
+    sortOption('Name (Z–A)', 'name', 'desc'),
+    sortOption('Email (A–Z)', 'email', 'asc'),
+    sortOption('Email (Z–A)', 'email', 'desc'),
+    sortOption('Status (A–Z)', 'status', 'asc'),
+    sortOption('Status (Z–A)', 'status', 'desc'),
   ];
+
+  /** Kept in sync with the table headers, which update the same store sort. */
+  protected readonly sortKey = computed(() => sortKeyOf(this.store.sort()));
 
   protected readonly searchText = signal('');
 
@@ -83,13 +91,11 @@ export class CustomerList {
     });
   }
 
-  protected onSortFieldChange(field: SortField): void {
-    this.store.setSort({ ...this.store.sort(), field });
-  }
-
-  protected toggleSortDirection(): void {
-    const current = this.store.sort();
-    this.store.setSort({ ...current, direction: current.direction === 'asc' ? 'desc' : 'asc' });
+  protected onSortOptionChange(key: string): void {
+    const option = this.sortOptions.find((o) => o.key === key);
+    if (option) {
+      this.store.setSort(option.sort);
+    }
   }
 
   protected openForm(customer?: Customer): void {
@@ -110,4 +116,13 @@ export class CustomerList {
         }
       });
   }
+}
+
+function sortKeyOf(sort: CustomerSort): string {
+  return `${sort.field}:${sort.direction}`;
+}
+
+function sortOption(label: string, field: SortField, direction: CustomerSort['direction']) {
+  const sort: CustomerSort = { field, direction };
+  return { label, sort, key: sortKeyOf(sort) };
 }
