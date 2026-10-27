@@ -144,11 +144,8 @@ What I'd test next:
 
 **Tool:** Claude Code.
 
-**How I used it:**
-- I gave it the assignment and asked for an implementation plan first. I went over the plan and changed it before any code was written.
-- Then I used it to set up the Angular and Express projects and to write the first version of the components, store, server and tests.
-- I also had it check the app in a browser at desktop and phone sizes.
-- I tested the app myself, asked for changes where something didn't feel right, and went over the code.
+- **Planning:** I designed how the app should behave: how search, sort, and adding and editing customers should work. Claude then proposed a code structure to implement that, which I reviewed and approved before any code was written.
+- **Implementation:** once the plan was settled, I used Claude to scaffold the Angular and Express projects, write a first version of the components, store, server and tests, and check the app in a browser at desktop and mobile sizes. I reviewed and adjusted the code as it went in.
 
 **What I changed or rejected:**
 - **Storage:** the first plan kept the customers in memory only, so everything reset when the server restarted. I changed it to file-based storage, so added and edited customers stay.
