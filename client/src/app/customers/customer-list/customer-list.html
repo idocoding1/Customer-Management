@@ -1,0 +1,152 @@
+<header class="page-header">
+  <h1>Customers</h1>
+  <button mat-flat-button (click)="openForm()">
+    <mat-icon>add</mat-icon>
+    Add customer
+  </button>
+</header>
+
+<section class="controls">
+  <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
+    <mat-label>Search by name or email</mat-label>
+    <mat-icon matPrefix>search</mat-icon>
+    <input
+      matInput
+      type="search"
+      autocomplete="off"
+      [value]="searchText()"
+      (input)="onSearch($any($event.target).value)"
+    />
+    @if (searchText()) {
+      <button matSuffix mat-icon-button aria-label="Clear search" (click)="clearSearch()">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </mat-form-field>
+
+  @if (isSmallScreen()) {
+    <div class="mobile-sort">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Sort by</mat-label>
+        <mat-select [value]="store.sort().field" (valueChange)="onSortFieldChange($event)">
+          @for (option of sortOptions; track option.field) {
+            <mat-option [value]="option.field">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <button
+        mat-icon-button
+        [attr.aria-label]="store.sort().direction === 'asc' ? 'Sorted ascending' : 'Sorted descending'"
+        [matTooltip]="store.sort().direction === 'asc' ? 'Ascending' : 'Descending'"
+        (click)="toggleSortDirection()"
+      >
+        <mat-icon>{{ store.sort().direction === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+      </button>
+    </div>
+  }
+</section>
+
+<div class="results" [attr.aria-busy]="store.loading()">
+  <mat-progress-bar
+    mode="indeterminate"
+    class="loading-bar"
+    [class.visible]="store.loading()"
+    aria-label="Loading customers"
+  />
+
+  @if (store.error(); as error) {
+    <div class="state" role="alert">
+      <mat-icon class="state-icon error">error_outline</mat-icon>
+      <p>{{ error }}</p>
+      <button mat-stroked-button (click)="store.refresh()">
+        <mat-icon>refresh</mat-icon>
+        Retry
+      </button>
+    </div>
+  } @else if (store.loaded() && store.customers().length === 0) {
+    <div class="state">
+      @if (store.activeSearch()) {
+        <mat-icon class="state-icon">search_off</mat-icon>
+        <p>No customers match "{{ store.activeSearch() }}".</p>
+        <button mat-stroked-button (click)="clearSearch()">Clear search</button>
+      } @else {
+        <mat-icon class="state-icon">group</mat-icon>
+        <p>No customers yet.</p>
+        <button mat-flat-button (click)="openForm()">Add your first customer</button>
+      }
+    </div>
+  } @else if (store.customers().length > 0) {
+    @if (isSmallScreen()) {
+      <ul class="card-list">
+        @for (customer of store.customers(); track customer.id) {
+          <li class="card">
+            <div class="card-main">
+              <span class="card-name">{{ customer.name }}</span>
+              <span class="card-email">{{ customer.email }}</span>
+              <span class="card-meta">
+                <span class="status status-{{ customer.status }}">{{ statusLabels[customer.status] }}</span>
+                <span>Created {{ customer.createdAt | date: 'mediumDate' }}</span>
+              </span>
+            </div>
+            <button mat-icon-button [attr.aria-label]="'Edit ' + customer.name" (click)="openForm(customer)">
+              <mat-icon>edit</mat-icon>
+            </button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <table
+        mat-table
+        [dataSource]="store.customers()"
+        matSort
+        matSortDisableClear
+        [matSortActive]="store.sort().field"
+        [matSortDirection]="store.sort().direction"
+        (matSortChange)="onTableSort($event)"
+      >
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+          <td mat-cell *matCellDef="let customer">{{ customer.name }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Email</th>
+          <td mat-cell *matCellDef="let customer">{{ customer.email }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Status</th>
+          <td mat-cell *matCellDef="let customer">
+            <span class="status status-{{ customer.status }}">{{ statusLabels[asCustomer(customer).status] }}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="createdAt">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Created</th>
+          <td mat-cell *matCellDef="let customer">{{ customer.createdAt | date: 'mediumDate' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef><span class="visually-hidden">Actions</span></th>
+          <td mat-cell *matCellDef="let customer" class="actions-cell">
+            <button
+              mat-icon-button
+              matTooltip="Edit"
+              [attr.aria-label]="'Edit ' + customer.name"
+              (click)="openForm(customer)"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns; sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      </table>
+    }
+
+    <p class="result-count">
+      {{ store.customers().length }} {{ store.customers().length === 1 ? 'customer' : 'customers' }}
+    </p>
+  }
+</div>
