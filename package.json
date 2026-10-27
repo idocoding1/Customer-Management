@@ -1,0 +1,16 @@
+{
+  "name": "customer-management",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Customer Management home assignment: Angular client + Express API with file-based storage",
+  "scripts": {
+    "postinstall": "npm --prefix server install && npm --prefix client install",
+    "start": "concurrently -k -n api,web -c blue,magenta \"npm --prefix server start\" \"npm --prefix client start\"",
+    "start:slow": "concurrently -k -n api,web -c blue,magenta \"DELAY_MS=800 npm --prefix server start\" \"npm --prefix client start\"",
+    "test": "npm --prefix client test -- --watch=false",
+    "reset-data": "npm --prefix server run reset-data"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

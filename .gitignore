@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.angular/
+.DS_Store
+# Runtime data file; created from server/data/seed.json on first start.
+server/data/customers.json
+server/data/*.tmp
+.claude/
