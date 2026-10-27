@@ -1,77 +1,72 @@
 # Customer Management
 
-A small customer management app. It's an Angular 22 client with Angular Material, backed by an Express API that stores customers in a JSON file.
+My solution for the Angular home assignment. It's a small app for managing customers: you can see the list, search it, filter by status, sort it, and add or edit customers. It works on desktop and on phones.
 
-You can list, search, filter by status, sort, add and edit customers. The layout works on desktop and on phones.
+The client is Angular 22 with Angular Material. I also built the optional backend, a small Express API that saves the customers to a JSON file.
 
-## Getting started
+## How to run it
 
-Requirements: Node.js 20.19+ (developed on Node 22) and npm.
+You need Node.js 20.19 or newer (I used Node 22) and npm.
 
 ```bash
-npm install     # installs root, server and client dependencies
-npm start       # starts the API on :3000 and the Angular app on :4200
+npm install
+npm start
 ```
 
-Then open http://localhost:4200.
+`npm install` in the root also installs the server and client dependencies. `npm start` runs the API on port 3000 and the Angular app on port 4200 together. Then open http://localhost:4200.
+
+Other scripts:
 
 | Script | What it does |
 |---|---|
-| `npm start` | Runs the API (`server/`) and the Angular dev server (`client/`) together. |
-| `npm run start:slow` | Same, but every API response is delayed by 800 ms. Use it to see the loading state and request cancellation. |
+| `npm run start:slow` | Same as `npm start`, but the API waits 800 ms before every response. Good for seeing the loading state and how old requests get cancelled. |
 | `npm test` | Runs the client unit tests once (Vitest). |
-| `npm run reset-data` | Deletes the data file, so the next start reloads the seed data. |
+| `npm run reset-data` | Deletes the data file, so the next start goes back to the sample data. |
 
-### Data source
+### Where the data comes from
 
-- Customers are stored in `server/data/customers.json`.
-- On first start, the server creates that file from `server/data/seed.json` (25 sample customers).
-- Every create or update is written back to the file, so changes survive restarts.
-- The data file is git-ignored. `seed.json` is the committed starting point.
-- The Angular dev server forwards `/api/*` to `http://localhost:3000` (`client/proxy.conf.json`), so no CORS setup is needed.
-- To run the API on a different port: `PORT=4000 npm --prefix server start`, then update the proxy target.
+The customers are saved in `server/data/customers.json`. That file doesn't exist in the repo. On the first start the server creates it from `server/data/seed.json`, which has 25 sample customers. After that, every add or edit is written to the file, so nothing is lost when the server restarts.
+
+The Angular dev server forwards `/api` calls to `http://localhost:3000` (see `client/proxy.conf.json`), so there's no CORS setup. To run the API on another port, use `PORT=4000 npm --prefix server start` and change the proxy target.
 
 ### API
 
 | Method | Path | Notes |
 |---|---|---|
-| `GET` | `/api/customers?q=&status=&sort=&dir=` | `q` searches name and email, ignoring case. `status` is a comma-separated list such as `active,lead` (leave it out for all statuses; unknown values are ignored). `sort` is one of `name`, `email`, `status`, `createdAt` (the default). `dir` is `asc` or `desc` (the default). |
-| `POST` | `/api/customers` | Body: `{ name, email, status }`. The server sets `id` and `createdAt`. Returns `201`. |
-| `PUT` | `/api/customers/:id` | Body: `{ name, email, status }`. |
+| `GET` | `/api/customers?q=&status=&sort=&dir=` | `q` searches name and email, ignoring case. `status` is a comma-separated list like `active,lead`; leave it out to get all statuses. `sort` is `name`, `email`, `status` or `createdAt` (default). `dir` is `asc` or `desc` (default). |
+| `POST` | `/api/customers` | Body is `{ name, email, status }`. The server sets `id` and `createdAt`. Returns `201`. |
+| `PUT` | `/api/customers/:id` | Body is `{ name, email, status }`. |
 
-Validation errors return `400`, a duplicate email returns `409` and an unknown id returns `404`, each with a `{ message }` body.
+Bad input returns `400`, an email that's already used returns `409`, and an unknown id returns `404`. All errors come back as `{ message }`.
 
 ## Project structure
 
 ```
 customer-management/
-├── package.json                  # root scripts (concurrently)
+├── package.json                  # root scripts
 ├── server/
-│   ├── data/seed.json            # initial data (customers.json is created at runtime)
+│   ├── data/seed.json            # sample data
 │   └── src/
-│       ├── index.ts              # Express routes + request validation
-│       └── customer-repository.ts# file-backed storage, search, sort
+│       ├── index.ts              # routes and input validation
+│       └── customer-repository.ts# file storage, search, filter, sort
 └── client/src/app/
-    ├── app.config.ts             # HttpClient + eager store initialisation
-    ├── api-timeout.interceptor.ts# 10s timeout on every API call
+    ├── app.config.ts
+    ├── api-timeout.interceptor.ts# 10 second limit on API calls
     └── customers/
         ├── customer.model.ts
-        ├── customer-api.service.ts      # thin HttpClient wrapper
-        ├── customer-store.ts            # state (signals) + search/sort request pipeline
-        ├── customer-list/               # page: search, sort, table/cards, empty/error states
-        └── customer-form-dialog/        # add + edit form (one component)
+        ├── customer-api.service.ts
+        ├── customer-store.ts            # state and the search/sort/filter logic
+        ├── customer-list/               # the main page
+        └── customer-form-dialog/        # add and edit form
 ```
 
-## Architecture and technical choices
+## Main decisions
 
-**One feature folder, three layers.**
-- `CustomerApiService` only makes HTTP calls.
-- `CustomerStore` owns the state and the request logic.
-- The components only render and forward user actions.
+**Keeping it simple.** It's one screen, so I kept everything in one `customers` folder with three parts. `CustomerApiService` only makes HTTP calls. `CustomerStore` holds the state and decides when to call the API. The components show the data and pass user actions to the store. I didn't use NgRx or add shared/core folders, because for an app this size they'd be extra code without much benefit.
 
-**Signals for state, RxJS for the request pipeline.** The store exposes read-only signals (`customers`, `loading`, `loaded`, `error`, `activeSearch`, `sort`) that templates read directly. RxJS is used only where it's clearly the better tool: debouncing, combining inputs and cancelling requests. The app runs zoneless, the Angular 22 default.
+**Signals and RxJS.** The store exposes its state as signals (`customers`, `loading`, `error` and so on), and the templates read them directly. I used RxJS only for the request flow, where it really helps: debounce, combining the inputs, and cancelling requests. The app runs without zone.js, which is the default in Angular 22.
 
-**Search: responsive without overloading the API.** This was the product requirement. The pipeline in `customer-store.ts` works like this:
+**Search that doesn't overload the API.** This was the product requirement, and it's handled in `customer-store.ts`:
 
 ```
 search input → trim → debounceTime(300ms) → distinctUntilChanged ┐
@@ -80,79 +75,86 @@ sort changes (immediate) ──────────────────�
 refresh / after save (immediate) ────────────────────────────────┘
 ```
 
-- **Debounce (300 ms):** typing "cohen" sends one request, not five. 300 ms is short enough to feel instant and long enough to cover normal typing speed.
-- **`distinctUntilChanged` after trimming:** adding spaces, or typing and deleting back to the same text, doesn't send a request.
-- **`switchMap`:** when a new query starts, the unfinished HTTP request is cancelled. A slow, older response can't overwrite newer results.
-- **Status filter, sort, retry and refresh after save skip the debounce,** because they're single deliberate actions.
-- **The current results stay on screen while a request is running,** with a thin progress bar on top, so the list doesn't flash empty while you type.
-- **Search runs on the server,** so the client never needs the full dataset. That keeps working as the data grows, and pagination can be added on the same endpoint.
+- The 300 ms debounce means typing "cohen" sends one request, not five. It still feels instant.
+- After trimming, `distinctUntilChanged` skips the request if the text didn't really change, for example extra spaces, or typing a letter and deleting it.
+- `switchMap` cancels the previous request when a new one starts, so a slow old response can never replace newer results.
+- The status filter, sort, retry and the refresh after saving don't wait for the debounce. They're single clicks, so there's no reason to delay them.
+- While a request is running, the old results stay on screen with a thin progress bar on top, so the list doesn't flash empty while you type.
+- The search runs on the server, so the client never needs to load every customer. That keeps working when there's more data, and paging can be added to the same endpoint later.
 
-You can see this in the browser's Network tab, or in the server log, which prints one line per request.
+You can see it working in the Network tab, or in the server log, which prints one line per request.
 
-**Data available on startup.** `provideAppInitializer` creates the store during bootstrap, so the first request starts before the list component renders. Bootstrap doesn't wait for it, so if the API is down the app still loads and shows an error with a Retry button instead of a blank page.
+**Data ready when the app starts.** I create the store in `provideAppInitializer`, so the first request goes out during bootstrap, before the list page is drawn. I don't make bootstrap wait for it, though. If the API is down, the app still opens and shows an error with a Retry button instead of a blank page.
 
-**Empty and error states are handled separately:**
+**Empty and error states.** I show something different for each case:
 - Loading
-- No customers at all (with an "Add your first customer" button)
-- No matches for the search or status filter (the message names both, e.g. *No Inactive or Lead customers match "noah"*, with a "Clear search and filters" button)
-- Load error (a specific message when the server can't be reached or doesn't respond in time, plus Retry)
+- No customers at all, with an "Add your first customer" button
+- No results for the search or status filter. The message says what was searched, for example *No Inactive or Lead customers match "noah"*, with a button to clear everything.
+- The list failed to load, with a message that says whether the server is unreachable or just too slow, and a Retry button
 
-**Request timeout.** An HTTP interceptor gives every API call 10 seconds. If the server doesn't answer in that time, the request is cancelled and the user sees *"The server took too long to respond"* with a way to retry, instead of a spinner that never stops. For a save, the message says the save *may* not have gone through: the browser has given up, but the server might still finish the request.
+When a save fails, the error shows inside the dialog, so nothing the user typed is lost. If the email is already used, the error appears on the email field.
 
-Save errors stay inside the dialog, so the user doesn't lose what they typed. A duplicate email (`409`) is shown as an error on the email field.
+**Timeout.** All API calls go through an interceptor that gives up after 10 seconds. Without it, if the API hangs, the Save button just spins forever. Now the user gets *"The server took too long to respond"* and can try again. For saves, the message says the save *may* not have gone through, because the server can still finish a request after the browser has given up on it.
 
-**Status is a filter, not a sort.** Sorting by status alphabetically isn't useful, because what users want is to see only certain statuses. A row of Active / Inactive / Lead chips lets you pick one or more, and the filter runs on the server along with the search. No chips selected means all statuses, and a "Show all" button clears the selection. The status column header isn't sortable, for the same reason.
+**Status is a filter, not a sort.** At first status was one of the sort options, but sorting statuses A to Z isn't useful. What you actually want is to see only certain statuses. So there's a row of Active / Inactive / Lead chips where you can pick one or more, and the filtering happens on the server together with the search. With nothing picked you see everyone, and "Show all" clears the selection.
 
-**Sorting is easy to find.** A "Sort by" dropdown next to the search box offers plain-language options ("Newest first", "Name (A–Z)", and so on). It's always visible, so users don't need to know that column headers can be clicked. Clicking a header still sorts too, and both read and write the same store state, so they always match. On phones, where the cards have no headers, the dropdown is the only sort control.
+**A visible sort control.** At first you could only sort by clicking the column headers, and that's hard to discover. So I added a "Sort by" dropdown next to the search box with clear options like "Newest first" and "Name (A–Z)". The headers still work too, and both use the same state, so they always match. On phones, where there are no headers, the dropdown is the only way to sort.
 
-**Responsive layout.** Below 600px (checked with CDK `BreakpointObserver`):
-- The table is replaced by a card list.
-- The dialog spans the screen width minus a 16px margin.
+**Small screens.** Under 600px (checked with CDK `BreakpointObserver`) the table turns into a list of cards, the search, sort and filter controls stack, and the dialog takes the full width minus a 16px margin.
 
-**Backend.** Express with a small repository class. Data is kept in memory for reads and written to `customers.json` on every change. Writes go through a queue and use write-to-temp-then-rename, so two quick saves can't corrupt the file. The server validates input itself rather than trusting the client.
+**Backend.** Express with a small repository class. The data is kept in memory for reads and written to `customers.json` after every change. Writes are queued and go to a temp file first, which is then renamed. That way two quick saves can't mix together, and a crash can't leave a half-written file. The server also validates the input itself instead of trusting the client.
 
 ## Tests
 
-`npm test` runs 16 unit tests (Vitest, the Angular 22 default):
+`npm test` runs 16 unit tests (Vitest, the default test runner in Angular 22).
 
-- **`customer-store.spec.ts`** (covers the search requirement):
-  - Loads data immediately on start.
-  - Fast typing produces exactly one request.
-  - Whitespace-only changes don't send a request.
-  - An older request is cancelled when a newer query starts, and its response is ignored.
-  - Sorting and the status filter skip the debounce, and the status filter is combined with the current search.
-  - The error state appears (with a specific message for timeouts), and Retry recovers from it.
-- **`api-timeout.interceptor.spec.ts`:** a request with no response fails with a timeout after 10 seconds and is cancelled; responses that arrive in time go through unchanged.
+- **`customer-store.spec.ts`** covers the search requirement:
+  - The data loads right away on start.
+  - Fast typing sends only one request.
+  - Typing only spaces doesn't send a request.
+  - An old request is cancelled when a new one starts, and its response is ignored.
+  - Sort and the status filter don't wait for the debounce, and the filter is combined with the current search.
+  - Errors show up (with a specific message for timeouts), and Retry recovers.
+- **`api-timeout.interceptor.spec.ts`:** a request with no answer fails after 10 seconds and gets cancelled, and a response that arrives in time goes through normally.
 - **`customer-form-dialog.spec.ts`:**
-  - Required and email validation.
-  - Values are trimmed on create.
-  - Edit mode pre-fills the form and calls update.
-  - A `409` from the server is shown on the email field and the dialog stays open.
-  - A timeout shows a message, keeps the dialog open and re-enables Save.
+  - Required fields and email format are validated.
+  - Values are trimmed when creating.
+  - Edit mode fills in the form and calls update.
+  - A `409` from the server shows on the email field and the dialog stays open.
+  - A timeout shows a message, keeps the dialog open and lets you save again.
 
 What I'd test next:
-1. **List component tests:** each empty/error state renders the right message and button, and the table switches to cards at the breakpoint.
-2. **API tests** for the server with supertest: validation, duplicate email, search, status filter and sort, and persistence to the file.
-3. **A few Playwright end-to-end tests** of the main flows (search, add, edit, sort) on desktop and mobile viewports, including an accessibility check with axe.
+1. The list component: each empty or error state shows the right message and button, and the table switches to cards on small screens.
+2. The API with supertest: validation, duplicate email, search, filter, sort, and that changes are saved to the file.
+3. A few Playwright tests for the main flows (search, filter, add, edit, sort) on desktop and mobile sizes, plus an accessibility check with axe.
 
-## Known limitations and what I'd improve with more time
+## Known limitations and what I'd do with more time
 
-- **No pagination.** The API returns every match. Beyond a few hundred customers I'd add server-side paging (`page`/`pageSize`, plus a total count) with `mat-paginator` or infinite scroll on mobile.
-- **No delete.** It isn't in the requirements. I'd add it with a confirmation step and an undo snackbar.
-- **Search and sort aren't saved in the URL.** Refreshing the page resets them, and you can't share a link to a filtered list. I'd sync them to query parameters.
-- **File storage is single-process.** It's fine for a demo, but there's no locking across multiple server instances. The next step would be SQLite or Postgres behind the same repository interface.
-- **A timed-out save might still have been applied.** The server may finish a save after the browser has given up on it. For a new customer, retrying then returns "email already exists". Sending an idempotency key with each create would make retries safe.
-- **No editing conflicts are detected.** If two people edit the same customer, the last save wins. An `updatedAt` or version check would fix that.
-- **No authentication or authorization.**
-- **No i18n.** Dates use the browser's default locale, and the UI text is English only.
-- **Small things:** status colors are hard-coded rather than taken from the Material theme. Material makes the bundle about 690 kB before compression, which could be reduced by lazy-loading the dialog.
+- **No paging.** The API returns every match. With more than a few hundred customers I'd add server-side paging (`page` and `pageSize`, plus a total count) with `mat-paginator`, or infinite scroll on mobile.
+- **No delete.** It wasn't required. I'd add it with a confirmation and an undo option in the snackbar.
+- **Search, filter and sort aren't in the URL.** Refreshing the page resets them, and you can't share a link to a filtered list. I'd sync them to query parameters.
+- **The file storage is for one server process.** That's fine here, but there's no locking if several servers write to the file. Next step would be SQLite or Postgres behind the same repository class.
+- **A timed-out save might still have been saved.** If that happens with a new customer, retrying will say the email already exists. Sending a unique key with each create would make retries safe.
+- **No conflict check.** If two people edit the same customer, the last save wins. An `updatedAt` or version check would fix that.
+- **No login or permissions.**
+- **English only.** Dates use the browser's locale, and there's no translation setup.
+- **Small things:** the status colors are hard-coded instead of coming from the Material theme. The bundle is about 690 kB before compression because of Material; lazy-loading the dialog would make it smaller.
 
 ## AI usage
 
-- **Tools:** Claude Code (Claude Opus).
-- **Planning:** I designed how the app should behave: how search, sort, and adding and editing customers should work. Claude then proposed a code structure to implement that, which I reviewed and approved before any code was written.
-- **Implementation:** once the plan was settled, I used Claude to scaffold the Angular and Express projects, write a first version of the components, store, server and tests, and check the app in a browser at desktop and mobile sizes. I reviewed and adjusted the code as it went in.
-- **What I changed or rejected:**
-  - The AI's plan kept customers in memory only, so data reset on every server restart. I changed this to file-based storage (`server/data/customers.json`, created from a seed file), so added and edited customers survive restarts.
-  - <!-- Add at least one example of your own from reviewing the code: something you questioned, simplified or changed. -->
-- I've read and run all of the code, and I can explain or change any part of it.
+**Tool:** Claude Code.
+
+**How I used it:**
+- I gave it the assignment and asked for an implementation plan first. I went over the plan and changed it before any code was written.
+- Then I used it to set up the Angular and Express projects and to write the first version of the components, store, server and tests.
+- I also had it check the app in a browser at desktop and phone sizes.
+- I tested the app myself, asked for changes where something didn't feel right, and went over the code.
+
+**What I changed or rejected:**
+- **Storage:** the first plan kept the customers in memory only, so everything reset when the server restarted. I changed it to file-based storage, so added and edited customers stay.
+- **Sorting:** sorting only worked by clicking the column headers, which isn't obvious to a user. I asked for a visible "Sort by" control.
+- **Status:** it was offered as a sort option (A to Z). I rejected that, since sorting statuses alphabetically doesn't help anyone, and asked for a status filter where you pick which statuses to see.
+- **Timeout:** while testing, I noticed a save that felt slow. It turned out the API had hung for a moment during development, and the Save button would have kept spinning with no limit. I asked for a 10-second timeout with a clear error message.
+- **Comments:** I asked to remove the comments that only repeated what the code says, and kept the ones that explain a decision.
+
+I've gone through all the code and run it, and I can explain or change any part of it.
