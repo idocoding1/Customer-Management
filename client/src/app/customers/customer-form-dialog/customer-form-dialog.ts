@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
+import { TimeoutError } from 'rxjs';
 import { CustomerStore } from '../customer-store';
 import {
   CUSTOMER_STATUSES,
@@ -77,6 +78,11 @@ export class CustomerFormDialog {
           this.form.controls.email.markAsTouched();
         } else if (err instanceof HttpErrorResponse && err.status === 400) {
           this.saveError.set(err.error?.message ?? 'Please check the form and try again.');
+        } else if (err instanceof TimeoutError) {
+          // The request was aborted, but the server may still have applied it.
+          this.saveError.set(
+            'The server took too long to respond, so the save may not have gone through. Please try again.',
+          );
         } else {
           this.saveError.set("Couldn't save the customer. Please try again.");
         }

@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { Subject, throwError } from 'rxjs';
+import { Subject, TimeoutError, throwError } from 'rxjs';
 import { CustomerApiService } from './customer-api.service';
 import { CustomerStore, SEARCH_DEBOUNCE_MS } from './customer-store';
 import { Customer } from './customer.model';
@@ -121,6 +121,14 @@ describe('CustomerStore', () => {
     });
     responses.at(-1)!.next([]);
     expect(store.activeStatuses()).toEqual(['active', 'lead']);
+  });
+
+  it('shows a specific message when the request times out', () => {
+    api.list.mockReturnValueOnce(throwError(() => new TimeoutError()));
+    const store = setup();
+
+    expect(store.error()).toBe('The server took too long to respond. Please try again.');
+    expect(store.loading()).toBe(false);
   });
 
   it('exposes an error and recovers on retry', () => {

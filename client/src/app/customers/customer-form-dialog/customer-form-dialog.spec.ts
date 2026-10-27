@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { of, throwError } from 'rxjs';
+import { TimeoutError, of, throwError } from 'rxjs';
 import { CustomerStore } from '../customer-store';
 import { Customer } from '../customer.model';
 import { CustomerFormDialog, CustomerFormDialogData } from './customer-form-dialog';
@@ -109,5 +109,18 @@ describe('CustomerFormDialog', () => {
 
     expect(dialogRef.close).not.toHaveBeenCalled();
     expect(element.textContent).toContain('A customer with this email already exists.');
+  });
+
+  it('shows a timeout message, keeps the dialog open and re-enables saving', async () => {
+    store.create.mockReturnValue(throwError(() => new TimeoutError()));
+    const { element, type, submit } = await render({ customer: null });
+    type('name', 'Dana');
+    type('email', 'dana@example.com');
+
+    await submit();
+
+    expect(dialogRef.close).not.toHaveBeenCalled();
+    expect(element.textContent).toContain('The server took too long to respond');
+    expect(element.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(false);
   });
 });

@@ -53,6 +53,7 @@ customer-management/
 │       └── customer-repository.ts# file-backed storage, search, sort
 └── client/src/app/
     ├── app.config.ts             # HttpClient + eager store initialisation
+    ├── api-timeout.interceptor.ts# 10s timeout on every API call
     └── customers/
         ├── customer.model.ts
         ├── customer-api.service.ts      # thin HttpClient wrapper
@@ -94,7 +95,9 @@ You can see this in the browser's Network tab, or in the server log, which print
 - Loading
 - No customers at all (with an "Add your first customer" button)
 - No matches for the search or status filter (the message names both, e.g. *No Inactive or Lead customers match "noah"*, with a "Clear search and filters" button)
-- Load error (a specific message when the server can't be reached, plus Retry)
+- Load error (a specific message when the server can't be reached or doesn't respond in time, plus Retry)
+
+**Request timeout.** An HTTP interceptor gives every API call 10 seconds. If the server doesn't answer in that time, the request is cancelled and the user sees *"The server took too long to respond"* with a way to retry, instead of a spinner that never stops. For a save, the message says the save *may* not have gone through: the browser has given up, but the server might still finish the request.
 
 Save errors stay inside the dialog, so the user doesn't lose what they typed. A duplicate email (`409`) is shown as an error on the email field.
 
@@ -110,7 +113,7 @@ Save errors stay inside the dialog, so the user doesn't lose what they typed. A 
 
 ## Tests
 
-`npm test` runs 12 unit tests (Vitest, the Angular 22 default):
+`npm test` runs 16 unit tests (Vitest, the Angular 22 default):
 
 - **`customer-store.spec.ts`** (covers the search requirement):
   - Loads data immediately on start.
@@ -118,12 +121,14 @@ Save errors stay inside the dialog, so the user doesn't lose what they typed. A 
   - Whitespace-only changes don't send a request.
   - An older request is cancelled when a newer query starts, and its response is ignored.
   - Sorting and the status filter skip the debounce, and the status filter is combined with the current search.
-  - The error state appears, and Retry recovers from it.
+  - The error state appears (with a specific message for timeouts), and Retry recovers from it.
+- **`api-timeout.interceptor.spec.ts`:** a request with no response fails with a timeout after 10 seconds and is cancelled; responses that arrive in time go through unchanged.
 - **`customer-form-dialog.spec.ts`:**
   - Required and email validation.
   - Values are trimmed on create.
   - Edit mode pre-fills the form and calls update.
   - A `409` from the server is shown on the email field and the dialog stays open.
+  - A timeout shows a message, keeps the dialog open and re-enables Save.
 
 What I'd test next:
 1. **List component tests:** each empty/error state renders the right message and button, and the table switches to cards at the breakpoint.
@@ -136,6 +141,7 @@ What I'd test next:
 - **No delete.** It isn't in the requirements. I'd add it with a confirmation step and an undo snackbar.
 - **Search and sort aren't saved in the URL.** Refreshing the page resets them, and you can't share a link to a filtered list. I'd sync them to query parameters.
 - **File storage is single-process.** It's fine for a demo, but there's no locking across multiple server instances. The next step would be SQLite or Postgres behind the same repository interface.
+- **A timed-out save might still have been applied.** The server may finish a save after the browser has given up on it. For a new customer, retrying then returns "email already exists". Sending an idempotency key with each create would make retries safe.
 - **No editing conflicts are detected.** If two people edit the same customer, the last save wins. An `updatedAt` or version check would fix that.
 - **No authentication or authorization.**
 - **No i18n.** Dates use the browser's default locale, and the UI text is English only.
@@ -143,10 +149,9 @@ What I'd test next:
 
 ## AI usage
 
-<!-- TODO: review and rewrite this section in your own words before submitting. -->
-
 - **Tools:** Claude Code (Claude Opus).
-- **What I used it for:** reading the brief and drafting an implementation plan, which I reviewed and changed before any code was written. Also scaffolding the Angular and Express projects, writing a first version of the components, store, server and tests, and checking the app in a browser at desktop and mobile sizes.
+- **Planning:** I designed how the app should behave: how search, sort, and adding and editing customers should work. Claude then proposed a code structure to implement that, which I reviewed and approved before any code was written.
+- **Implementation:** once the plan was settled, I used Claude to scaffold the Angular and Express projects, write a first version of the components, store, server and tests, and check the app in a browser at desktop and mobile sizes. I reviewed and adjusted the code as it went in.
 - **What I changed or rejected:**
   - The AI's plan kept customers in memory only, so data reset on every server restart. I changed this to file-based storage (`server/data/customers.json`, created from a seed file), so added and edited customers survive restarts.
   - <!-- Add at least one example of your own from reviewing the code: something you questioned, simplified or changed. -->

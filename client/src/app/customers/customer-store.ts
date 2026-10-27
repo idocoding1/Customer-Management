@@ -5,6 +5,7 @@ import {
   BehaviorSubject,
   Observable,
   Subject,
+  TimeoutError,
   catchError,
   combineLatest,
   debounceTime,
@@ -120,6 +121,9 @@ export class CustomerStore {
 }
 
 function describeError(err: unknown): string {
+  if (err instanceof TimeoutError) {
+    return 'The server took too long to respond. Please try again.';
+  }
   if (err instanceof HttpErrorResponse && err.status === 0) {
     return "Can't reach the server. Check that the API is running and try again.";
   }
