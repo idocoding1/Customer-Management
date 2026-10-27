@@ -39,26 +39,6 @@ The Angular dev server forwards `/api` calls to `http://localhost:3000` (see `cl
 
 Names can only contain letters (any language), spaces, hyphens and apostrophes, so "O'Brien" and "Ben-David" work but numbers and other symbols don't. Bad input returns `400`, an email that's already used returns `409`, and an unknown id returns `404`. All errors come back as `{ message }`.
 
-## Project structure
-
-```
-customer-management/
-├── package.json                  # root scripts
-├── server/
-│   ├── data/seed.json            # sample data
-│   └── src/
-│       ├── index.ts              # routes and input validation
-│       └── customer-repository.ts# file storage, search, filter, sort
-└── client/src/app/
-    ├── app.config.ts
-    ├── api-timeout.interceptor.ts# 10 second limit on API calls
-    └── customers/
-        ├── customer.model.ts
-        ├── customer-api.service.ts
-        ├── customer-store.ts            # state and the search/sort/filter logic
-        ├── customer-list/               # the main page
-        └── customer-form-dialog/        # add and edit form
-```
 
 ## Main decisions
 
@@ -131,15 +111,13 @@ What I'd test next:
 
 ## Known limitations and what I'd do with more time
 
-- **No paging.** The API returns every match. With more than a few hundred customers I'd add server-side paging (`page` and `pageSize`, plus a total count) with `mat-paginator`, or infinite scroll on mobile.
 - **No delete.** It wasn't required. I'd add it with a confirmation and an undo option in the snackbar.
 - **Search, filter and sort aren't in the URL.** Refreshing the page resets them, and you can't share a link to a filtered list. I'd sync them to query parameters.
-- **The file storage is for one server process.** That's fine here, but there's no locking if several servers write to the file. Next step would be SQLite or Postgres behind the same repository class.
 - **A timed-out save might still have been saved.** If that happens with a new customer, retrying will say the email already exists. Sending a unique key with each create would make retries safe.
 - **No conflict check.** If two people edit the same customer, the last save wins. An `updatedAt` or version check would fix that.
 - **No login or permissions.**
 - **English only.** Dates use the browser's locale, and there's no translation setup.
-- **Small things:** the status colors are hard-coded instead of coming from the Material theme. The bundle is about 690 kB before compression because of Material; lazy-loading the dialog would make it smaller.
+- **Small things:** the status colors are hard-coded instead of coming from the Material theme.
 
 ## AI usage
 
@@ -153,6 +131,5 @@ What I'd test next:
 - **Sorting:** sorting only worked by clicking the column headers, which isn't obvious to a user. I asked for a visible "Sort by" control.
 - **Status:** it was offered as a sort option (A to Z). I rejected that, since sorting statuses alphabetically doesn't help anyone, and asked for a status filter where you pick which statuses to see.
 - **Timeout:** while testing, I noticed a save that felt slow. It turned out the API had hung for a moment during development, and the Save button would have kept spinning with no limit. I asked for a 10-second timeout with a clear error message.
-- **Comments:** I asked to remove the comments that only repeated what the code says, and kept the ones that explain a decision.
 
 I've gone through all the code and run it, and I can explain or change any part of it.
