@@ -24,22 +24,12 @@ export const SEARCH_DEBOUNCE_MS = 300;
 interface CustomerState {
   customers: Customer[];
   loading: boolean;
-  /** True once the first request has completed (successfully or not). */
   loaded: boolean;
   error: string | null;
-  /** The search term and status filter the current `customers` were fetched with. */
   search: string;
   statuses: CustomerStatus[];
 }
 
-/**
- * Holds the customer list and owns the search/sort -> API request pipeline.
- *
- * Search is debounced and de-duplicated so typing doesn't fire a request per keystroke,
- * and switchMap cancels any in-flight request when a newer query arrives, so stale
- * responses can never overwrite fresh results. Sort changes and refreshes are explicit
- * user actions, so they skip the debounce.
- */
 @Injectable({ providedIn: 'root' })
 export class CustomerStore {
   private readonly api = inject(CustomerApiService);
@@ -96,7 +86,6 @@ export class CustomerStore {
     this.searchInput$.next(term);
   }
 
-  /** Status chips are discrete clicks, so like sorting this applies immediately. */
   setStatusFilter(statuses: CustomerStatus[]): void {
     this.statusFilter.set(statuses);
     this.statuses$.next(statuses);

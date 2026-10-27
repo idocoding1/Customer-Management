@@ -51,7 +51,6 @@ export class CustomerList {
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
 
-  /** Below 600px the table is swapped for a card list. */
   protected readonly isSmallScreen = toSignal(
     inject(BreakpointObserver)
       .observe('(max-width: 599.98px)')
@@ -61,7 +60,6 @@ export class CustomerList {
 
   protected readonly columns = ['name', 'email', 'status', 'createdAt', 'actions'];
   protected readonly statusLabels = STATUS_LABELS;
-  /** Field + direction pairs in plain language, so sorting is discoverable without clicking headers. */
   protected readonly sortOptions = [
     sortOption('Newest first', 'createdAt', 'desc'),
     sortOption('Oldest first', 'createdAt', 'asc'),
@@ -71,13 +69,11 @@ export class CustomerList {
     sortOption('Email (Z–A)', 'email', 'desc'),
   ];
 
-  /** Kept in sync with the table headers, which update the same store sort. */
   protected readonly sortKey = computed(() => sortKeyOf(this.store.sort()));
 
   protected readonly statuses = CUSTOMER_STATUSES;
   protected readonly searchText = signal('');
 
-  /** Describes why the list is empty when a search or status filter is applied; null otherwise. */
   protected readonly noResultsMessage = computed(() => {
     const search = this.store.activeSearch();
     const statuses = this.store.activeStatuses().map((s) => STATUS_LABELS[s]).join(' or ');
@@ -87,7 +83,6 @@ export class CustomerList {
     return null;
   });
 
-  /** mat-table row templates are untyped; this restores the Customer type in the template. */
   protected asCustomer(row: unknown): Customer {
     return row as Customer;
   }

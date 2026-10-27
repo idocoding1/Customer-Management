@@ -11,7 +11,6 @@ import {
 } from './customer-repository.js';
 
 const PORT = Number(process.env.PORT ?? 3000);
-// Optional artificial latency, handy for demoing loading states and request cancellation.
 const DELAY_MS = Number(process.env.DELAY_MS ?? 0);
 
 const SORT_FIELDS: SortField[] = ['name', 'email', 'status', 'createdAt'];
@@ -31,7 +30,6 @@ app.get('/api/customers', (req, res) => {
     ? (req.query.sort as SortField)
     : undefined;
   const dir: SortDirection = req.query.dir === 'asc' ? 'asc' : 'desc';
-  // ?status=active,lead — unknown values are ignored; none means all statuses.
   const statuses =
     typeof req.query.status === 'string'
       ? (req.query.status.split(',').filter((s) => CUSTOMER_STATUSES.includes(s as CustomerStatus)) as CustomerStatus[])
@@ -73,7 +71,6 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   }
 });
 
-/** Validates the request body; sends a 400 and returns null when invalid. */
 function parseInput(req: Request, res: Response): CustomerInput | null {
   const { name, email, status } = req.body ?? {};
   const errors: string[] = [];

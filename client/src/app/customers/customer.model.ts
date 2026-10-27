@@ -6,7 +6,6 @@ export interface Customer {
   name: string;
   email: string;
   status: CustomerStatus;
-  /** ISO 8601 timestamp, set by the server. */
   createdAt: string;
 }
 
@@ -21,7 +20,6 @@ export interface CustomerSort {
 
 export interface CustomerQuery {
   search: string;
-  /** Empty means all statuses. */
   statuses: CustomerStatus[];
   sort: CustomerSort;
 }

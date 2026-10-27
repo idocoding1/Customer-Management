@@ -26,11 +26,6 @@ const dataDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../d
 const dataFile = path.join(dataDir, 'customers.json');
 const seedFile = path.join(dataDir, 'seed.json');
 
-/**
- * File-backed customer storage. The whole list is kept in memory for reads and
- * written back to data/customers.json on every change. On first run the file is
- * created from seed.json, so the app always starts with data.
- */
 export class CustomerRepository {
   private customers: Customer[] = [];
   // Serializes writes so two quick saves can't interleave and corrupt the file.

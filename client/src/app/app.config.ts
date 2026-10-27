@@ -12,8 +12,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideHttpClient(withFetch(), withInterceptors([apiTimeoutInterceptor])),
-    // Create the store during bootstrap so the first customer request starts right away.
-    // It isn't awaited: if the API is down the app still renders and shows an error state.
+    // Starts the first load during bootstrap without awaiting it, so a down API can't block rendering.
     provideAppInitializer(() => {
       inject(CustomerStore);
     }),

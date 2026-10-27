@@ -18,7 +18,6 @@ import {
 } from '../customer.model';
 
 export interface CustomerFormDialogData {
-  /** The customer to edit, or null to add a new one. */
   customer: Customer | null;
 }
 
@@ -79,7 +78,6 @@ export class CustomerFormDialog {
         } else if (err instanceof HttpErrorResponse && err.status === 400) {
           this.saveError.set(err.error?.message ?? 'Please check the form and try again.');
         } else if (err instanceof TimeoutError) {
-          // The request was aborted, but the server may still have applied it.
           this.saveError.set(
             'The server took too long to respond, so the save may not have gone through. Please try again.',
           );

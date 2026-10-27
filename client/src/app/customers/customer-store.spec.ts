@@ -14,7 +14,6 @@ const noa: Customer = {
 };
 
 describe('CustomerStore', () => {
-  // Each list() call returns its own Subject so tests control when (and whether) it responds.
   let responses: Subject<Customer[]>[];
   let api: { list: ReturnType<typeof vi.fn> };
 
